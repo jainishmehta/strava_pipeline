@@ -1,3 +1,3 @@
 # strava_pipeline
 
-Practicing data engineering skills by querying Strava information to use for downstream tasks. 
+Creating Strava activity data pipeline to use for ML tasks such as goal estimation and fatigue calculator.
