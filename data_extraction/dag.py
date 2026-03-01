@@ -1,4 +1,3 @@
-i transform it first:
 from airflow.decorators import dag, task
 from ingestion import Activity
 import logging
@@ -15,12 +14,13 @@ def create_dag(dag_id, schedule, dag_number, default_args):
             activities = pipeline_activities.get_activities()
             pipeline_activities.transform_activities(activities)
             pipeline_activities.validate_activities(activities)
+            print("Validation completed successfully")
             pipeline_activities.store_activities(activities=activities)
             return
         ingest_activities()
     return strava_dag()
 
-number_of_dags = os.getenv("DYNAMIC_DAG_NUMBER", default=3)
+number_of_dags = os.getenv("DYNAMIC_DAG_NUMBER", default=1)
 number_of_dags = int(number_of_dags)
 
 default_args = {"owner": "airflow", "date_executed": date.today()}
