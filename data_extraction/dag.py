@@ -4,7 +4,7 @@ import logging
 import os
 from datetime import datetime, date
 
-def create_dag(dag_id, schedule, dag_number, default_args):
+def create_dag(dag_id, schedule, default_args):
     @dag(dag_id=dag_id, schedule=schedule, default_args=default_args, catchup=False)
     def strava_dag():
         @task()
@@ -20,12 +20,7 @@ def create_dag(dag_id, schedule, dag_number, default_args):
         ingest_activities()
     return strava_dag()
 
-number_of_dags = os.getenv("DYNAMIC_DAG_NUMBER", default=1)
-number_of_dags = int(number_of_dags)
-
 default_args = {"owner": "airflow", "date_executed": date.today()}
 schedule = "@weekly"
 dag_id = "strava_dag"
-dag_number = 1
-for i in range(number_of_dags):
-    globals()[f"strava_dag_{i}"] = create_dag(dag_id, schedule, dag_number, default_args)
+globals()[f"strava_dag_{0}"] = create_dag(dag_id, schedule, default_args)

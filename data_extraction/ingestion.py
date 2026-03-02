@@ -6,11 +6,26 @@ import great_expectations as gx
 import pandas as pd
 from datetime import datetime
 from google.cloud import bigquery
+import requests
 
 class Activity:
     def __init__(self):
         return None
+    
+    def get_city_from_coords(lat, lng):
+        response = requests.get(
+            "https://geocoder.ca",
+            params={
+                "latt": lat,
+                "longt": lng,
+                "reverse": 1,
+                "json": 1
+            }
+        )
+        data = response.json()
+        return data.get("city")
 
+    
     def get_activities(self, after="2024-01-01", limit=100):
         load_dotenv("/home/jainishmehta/airflow/dags/.env")
         client = Client()
@@ -29,12 +44,10 @@ class Activity:
         "RollerSki", "Rowing", "Run", "Sail", "Skateboard", "Snowboard", "Snowshoe", "Soccer", "StairStepper", "StandUpPaddling", "Surfing", "Swim",
         "Velomobile", "VirtualRide", "VirtualRun", "Walk", "WeightTraining", "Wheelchair", "Windsurf", "Workout", "Yoga"]
         for activity in activities:
-            if activity.type.root=='VirtualRide':
-                activity.type.root = "Ride"
-            elif activity.type.root=='VirtualRun':
-                activity.type.root = "Run"
-            elif activity.type.root not in activity_types:
-                activity.type.root = "Other"
+            if activity.sport_type=='GravelRide':
+                activity.sport_type = "Ride"
+            elif activity.sport_type=='VirtualRun' or activity.sport_type=='VirtualRide' or activity.sport_type not in activity_types: 
+                activity.sport_type = "Other"
             if activity.distance:
                 activity.distance = float(activity.distance / 1000)
             if activity.moving_time:
@@ -94,8 +107,8 @@ class Activity:
                 if not result.success:
                     expectation_type = result.expectation_config.type
                     column = result.expectation_config.kwargs.get("column", "Unknown Column")
-                    print(f" -> Failed: {expectation_type} on column '{column}'")
-                    print(f"-> Details: {result.results}")
+                    print(f"Failed: {expectation_type} on column '{column}'")
+                    print(f"Details: {result.results}")
         return validation_results
     
     def store_activities(self, activities, db_path="strava.db"):
@@ -110,7 +123,6 @@ class Activity:
         "start_latlng_lon": a.start_latlng.lon if a.start_latlng else None,
         "end_latlng_lat": a.end_latlng.lat if a.end_latlng else None,
         "end_latlng_lon": a.end_latlng.lon if a.end_latlng else None,
-        "city": a.location_city,
         "moving_time": int(a.moving_time) if a.moving_time else None,
         "elapsed_time": int(a.elapsed_time) if a.elapsed_time else None,
         "total_elevation_gain": float(a.total_elevation_gain) if a.total_elevation_gain else None,
@@ -132,9 +144,8 @@ class Activity:
             bigquery.SchemaField("start_latlng",bigquery.enums.SqlTypeNames.FLOAT64),
             bigquery.SchemaField("start_latlng_lon",bigquery.enums.SqlTypeNames.FLOAT64),
             bigquery.SchemaField("end_latlng_lat",bigquery.enums.SqlTypeNames.FLOAT64),
-            bigquery.SchemaField("end_latlng_lon",bigquery.enums.SqlTypeNames.FLOAT64),
-            bigquery.SchemaField("city",bigquery.enums.SqlTypeNames.STRING),
-             ]
+            bigquery.SchemaField("end_latlng_lon",bigquery.enums.SqlTypeNames.FLOAT64)
+        ]
 
         job_config = bigquery.LoadJobConfig(
         schema=schema,
@@ -146,9 +157,5 @@ class Activity:
         )
         job.result()
         table = client.get_table(table_id)
-        print(
-            "Loaded {} rows and {} columns to {}".format(
-                table.num_rows, len(table.schema), table_id
-            )
-        )
+        print("Activities stored successfully")
         return
