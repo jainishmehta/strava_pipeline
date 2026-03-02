@@ -106,6 +106,9 @@ class Activity:
         data = [{ "id": a.id,
         "type": str(a.type.root),
         "distance": float(a.distance) if a.distance else None,
+        "start_latlng": [a.start_latlng.lat, a.start_latlng.lon] if a.start_latlng else None,
+        "end_latlng": [a.end_latlng.lat, a.end_latlng.lon] if a.end_latlng else None,
+        "city": a.location_city if a.location_city else None,
         "moving_time": int(a.moving_time) if a.moving_time else None,
         "elapsed_time": int(a.elapsed_time) if a.elapsed_time else None,
         "total_elevation_gain": float(a.total_elevation_gain) if a.total_elevation_gain else None,
@@ -124,6 +127,9 @@ class Activity:
             bigquery.SchemaField("average_speed", bigquery.enums.SqlTypeNames.FLOAT64),
             bigquery.SchemaField("max_speed", bigquery.enums.SqlTypeNames.FLOAT64),
             bigquery.SchemaField("kudos_count",bigquery.enums.SqlTypeNames.INT64),
+            bigquery.SchemaField("start_latlng",bigquery.enums.SqlTypeNames.FLOAT64, mode="REPEATED"),
+            bigquery.SchemaField("end_latlng",bigquery.enums.SqlTypeNames.FLOAT64, mode="REPEATED"),
+            bigquery.SchemaField("city",bigquery.enums.SqlTypeNames.STRING),
              ]
 
         job_config = bigquery.LoadJobConfig(
