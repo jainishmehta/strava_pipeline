@@ -12,21 +12,8 @@ class Activity:
     def __init__(self):
         return None
     
-    def get_city_from_coords(lat, lng):
-        response = requests.get(
-            "https://geocoder.ca",
-            params={
-                "latt": lat,
-                "longt": lng,
-                "reverse": 1,
-                "json": 1
-            }
-        )
-        data = response.json()
-        return data.get("city")
-
-    
     def get_activities(self, after="2024-01-01", limit=100):
+        # Customize to path of the .env file
         load_dotenv("/home/jainishmehta/airflow/dags/.env")
         client = Client()
         token_response = client.refresh_access_token(
@@ -85,7 +72,7 @@ class Activity:
         suite.add_expectation(gx.expectations.ExpectColumnValuesToBeInSet(column="type", value_set=["AlpineSki", "BackcountrySki", "Canoeing", "Crossfit", "EBikeRide", "Elliptical", "Golf",
         "Handcycle", "Hike", "IceSkate", "InlineSkate", "Kayaking", "Kitesurf", "NordicSki", "Ride", "RockClimbing",
         "RollerSki", "Rowing", "Run", "Sail", "Skateboard", "Snowboard", "Snowshoe", "Soccer", "StairStepper", "StandUpPaddling", "Surfing", "Swim",
-        "Velomobile", "VirtualRide", "VirtualRun", "Walk", "WeightTraining", "Wheelchair", "Windsurf", "Workout", "Yoga", "Other"]))
+        "Velomobile", "VirtualRide", "VirtualRun", "Walk", "WeightTraining", "Wheelchair", "Windsurf", "Workout", "Yoga"]))
         suite.add_expectation(gx.expectations.ExpectColumnValuesToBeBetween(column="distance", min_value=0, max_value=1000))
         suite.add_expectation(gx.expectations.ExpectColumnValuesToBeBetween(column="moving_time", min_value=0, max_value=1000))
         suite.add_expectation(gx.expectations.ExpectColumnValuesToBeBetween(column="elapsed_time", min_value=0, max_value=1000))
@@ -148,14 +135,12 @@ class Activity:
         ]
 
         job_config = bigquery.LoadJobConfig(
-        schema=schema,
-            write_disposition="WRITE_TRUNCATE",
+        schema=schema, write_disposition="WRITE_TRUNCATE",
         )
 
         job = client.load_table_from_dataframe(
             dataframe, table_id, job_config=job_config
         )
         job.result()
-        table = client.get_table(table_id)
         print("Activities stored successfully")
         return
