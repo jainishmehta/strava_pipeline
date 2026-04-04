@@ -135,7 +135,7 @@ class Activity:
         ]
 
         job_config = bigquery.LoadJobConfig(
-        schema=schema, write_disposition="WRITE_TRUNCATE",
+        schema=schema,
         )
 
         job = client.load_table_from_dataframe(
